@@ -1,0 +1,348 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap");
+
+@theme {
+  --color-night: #080d1a;
+  --color-night-2: #0e1830;
+  --color-pitch: #1fae6e;
+  --color-pitch-light: #4fe3a1;
+  --color-gold: #f4b740;
+  --color-gold-light: #ffd676;
+  --color-coral: #ff6b6b;
+  --color-ink: #eef3f1;
+  --color-mist: #9fb0c3;
+
+  --font-display: "Orbitron", "Rajdhani", sans-serif;
+  --font-heading: "Rajdhani", sans-serif;
+  --font-body: "Inter", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--color-ink);
+  background: var(--color-night);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Fondo "estadio nocturno": degradado oscuro + reflectores difuminados
+   que dan color a la transparencia de las tarjetas de cristal. */
+.stadium-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 50% -10%,
+      rgba(31, 174, 110, 0.18),
+      transparent
+    ),
+    linear-gradient(
+      180deg,
+      var(--color-night) 0%,
+      var(--color-night-2) 55%,
+      var(--color-night) 100%
+    );
+}
+
+.stadium-bg::before,
+.stadium-bg::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.55;
+}
+
+.stadium-bg::before {
+  width: 38vw;
+  height: 38vw;
+  background: var(--color-pitch);
+  top: -8%;
+  left: -8%;
+  animation: float-a 22s ease-in-out infinite;
+}
+
+.stadium-bg::after {
+  width: 32vw;
+  height: 32vw;
+  background: var(--color-gold);
+  bottom: -10%;
+  right: -6%;
+  opacity: 0.35;
+  animation: float-b 26s ease-in-out infinite;
+}
+
+@keyframes float-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(4vw, 6vw) scale(1.08);
+  }
+}
+
+@keyframes float-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-3vw, -4vw) scale(1.1);
+  }
+}
+
+/* ---------- Glassmorphism ---------- */
+
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.glass-strong {
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.glass-soft {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Dock flotante estilo "liquid glass" (Apple): más blur/saturación,
+   sombra profunda para que se sienta despegado de la pantalla, y un
+   filo de luz arriba que simula el reflejo del cristal. */
+.glass-dock {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12),
+    rgba(255, 255, 255, 0.05)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.5),
+    0 30px 70px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.glass-dock::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    transparent 45%
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* "Liquid glass" más jugoso/glossy: para el podio y la tarjeta de resumen.
+   Más saturación, un blob de brillo (como reflejo en una burbuja) y sombras
+   con tinte de color para que se sienta "mordible", no solo transparente. */
+.glass-glossy {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.03)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  box-shadow:
+    0 16px 42px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -14px 26px rgba(0, 0, 0, 0.14);
+}
+
+.glass-glossy::after {
+  content: "";
+  position: absolute;
+  top: -35%;
+  left: -15%;
+  width: 65%;
+  height: 65%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.4),
+    transparent 70%
+  );
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+/* ---------- Glassmorphism ---------- */
+
+/* Opacidad muy suave (4%) - Antes: .glass-soft */
+.glass-sm {
+  background: rgba(
+    255,
+    255,
+    255,
+    0.02
+  ); /* <- Aquí cambias la opacidad del fondo */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Opacidad media (6%) - Antes: .glass */
+.glass-md {
+  background: rgba(
+    255,
+    255,
+    255,
+    0.06
+  ); /* <- Aquí cambias la opacidad del fondo */
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px) saturate(200%);
+  -webkit-backdrop-filter: blur(16px) saturate(200%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Opacidad fuerte (9%) - Antes: .glass-strong */
+.glass-lg {
+  background: rgba(
+    255,
+    255,
+    255,
+    0.09
+  ); /* <- Aquí cambias la opacidad del fondo */
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Dock flotante estilo "liquid glass" (Apple) - Antes: .glass-dock */
+.glass-xl {
+  position: relative;
+  overflow: hidden;
+  /* La opacidad aquí funciona con un degradado que va del 12% al 5% */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.12),
+    /* <- Opacidad superior */ rgba(255, 255, 255, 0.05)
+      /* <- Opacidad inferior */
+  );
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.5),
+    0 30px 70px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.glass-xl::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    /* Reflejo superior (16% de opacidad) */ transparent 45%
+  );
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* ---------- Marcador / scoreboard (elemento de firma) ---------- */
+
+.scoreboard-digits {
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  font-feature-settings: "tnum";
+}
+
+.led-glow-green {
+  color: var(--color-pitch-light);
+  text-shadow:
+    0 0 8px rgba(79, 227, 161, 0.55),
+    0 0 22px rgba(79, 227, 161, 0.25);
+}
+
+.led-glow-gold {
+  color: var(--color-gold-light);
+  text-shadow:
+    0 0 8px rgba(244, 183, 64, 0.5),
+    0 0 22px rgba(244, 183, 64, 0.22);
+}
+
+.scanlines {
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.035) 0px,
+    rgba(255, 255, 255, 0.035) 1px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+/* ---------- Scrollbar discreto ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+}
+
+/* ---------- Accesibilidad: foco visible ---------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--color-pitch-light);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stadium-bg::before,
+  .stadium-bg::after {
+    animation: none;
+  }
+}
