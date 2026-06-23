@@ -4,7 +4,7 @@ import MatchViewTab from "./components/MatchViewTab";
 
 // 1. Importaciones para el Batch de Firebase
 import { writeBatch, doc } from "firebase/firestore";
-import { db } from "./firebase"; // <-- OJO: Verifica que esta ruta apunte a tu archivo de config de Firebase
+import { db } from "./firebase/config"; // <-- OJO: Verifica que esta ruta apunte a tu archivo de config de Firebase
 
 import { useSharedQuiniela } from "./hooks/useSharedQuiniela";
 import { useAdminAccess } from "./hooks/useAdminAccess";
