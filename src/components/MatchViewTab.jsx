@@ -95,11 +95,23 @@ export default function MatchViewTab({ matches, participants, predictions }) {
   const [manualIndex, setManualIndex] = useState(null);
 
   const sortedMatches = useMemo(() => {
-    return [...matches].sort(
-      (a, b) => new Date(a.datetime) - new Date(b.datetime),
-    );
-  }, [matches]);
+    return [...matches].sort((a, b) => {
+      // Si 'a' no tiene fecha pero 'b' sí, 'a' va al final
+      if (!a.datetime && b.datetime) return 1;
+      // Si 'b' no tiene fecha pero 'a' sí, 'b' va al final
+      if (a.datetime && !b.datetime) return -1;
 
+      // Si NINGUNO de los dos tiene fecha, los ordenamos por su ID numérico (m-25, m-26, etc.)
+      if (!a.datetime && !b.datetime) {
+        const numA = parseInt(a.id.replace(/\D/g, "")) || 0;
+        const numB = parseInt(b.id.replace(/\D/g, "")) || 0;
+        return numA - numB;
+      }
+
+      // Si ambos tienen fecha, ordenamos por fecha de forma normal
+      return new Date(a.datetime) - new Date(b.datetime);
+    });
+  }, [matches]);
   // Índice del último partido con resultado (se recalcula cuando llegan datos)
   const defaultIndex = useMemo(() => {
     return sortedMatches.reduce((acc, m, idx) => {
