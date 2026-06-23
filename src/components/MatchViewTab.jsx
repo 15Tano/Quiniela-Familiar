@@ -50,8 +50,7 @@ function PredictionBadge({ pred, match }) {
     );
   }
 
-  const points = scorePrediction(pred, match);
-
+  const { points } = scorePrediction(pred, match);
   const styles = {
     2: {
       icon: "★",
