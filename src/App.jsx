@@ -1,5 +1,11 @@
 import { useRef, useState } from "react";
 import { Trophy, Download, Upload } from "lucide-react";
+import MatchViewTab from "./components/MatchViewTab";
+
+// 1. Importaciones para el Batch de Firebase
+import { writeBatch, doc } from "firebase/firestore";
+import { db } from "./firebase"; // <-- OJO: Verifica que esta ruta apunte a tu archivo de config de Firebase
+
 import { useSharedQuiniela } from "./hooks/useSharedQuiniela";
 import { useAdminAccess } from "./hooks/useAdminAccess";
 import { exportBackup, readBackupFile } from "./utils/backup";
@@ -13,6 +19,226 @@ import ResultsTab from "./components/ResultsTab";
 import ConnectionStatus from "./components/ConnectionStatus";
 import SetupNotice from "./components/SetupNotice";
 import AdminPinModal from "./components/AdminPinModal";
+
+// 2. Aquí pegas toda tu lista de partidos
+const todosLosPartidos = [
+  {
+    datetime: null,
+    group: "",
+    id: "m-25",
+    resultA: null,
+    resultB: null,
+    teamA: "Suiza",
+    teamB: "Canadá",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-26",
+    resultA: null,
+    resultB: null,
+    teamA: "Bosnia y H.",
+    teamB: "Catar",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-27",
+    resultA: null,
+    resultB: null,
+    teamA: "Marruecos",
+    teamB: "Haití",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-28",
+    resultA: null,
+    resultB: null,
+    teamA: "Escocia",
+    teamB: "Brasil",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-29",
+    resultA: null,
+    resultB: null,
+    teamA: "Sudáfrica",
+    teamB: "Corea del Sur",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-30",
+    resultA: null,
+    resultB: null,
+    teamA: "Chequia",
+    teamB: "México",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-31",
+    resultA: null,
+    resultB: null,
+    teamA: "Curazao",
+    teamB: "Costa de Marfil",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-32",
+    resultA: null,
+    resultB: null,
+    teamA: "Ecuador",
+    teamB: "Alemania",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-33",
+    resultA: null,
+    resultB: null,
+    teamA: "Túnez",
+    teamB: "Países Bajos",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-34",
+    resultA: null,
+    resultB: null,
+    teamA: "Japón",
+    teamB: "Suecia",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-35",
+    resultA: null,
+    resultB: null,
+    teamA: "Turquía",
+    teamB: "USA",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-36",
+    resultA: null,
+    resultB: null,
+    teamA: "Paraguay",
+    teamB: "Australia",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-37",
+    resultA: null,
+    resultB: null,
+    teamA: "Noruega",
+    teamB: "Francia",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-38",
+    resultA: null,
+    resultB: null,
+    teamA: "Senegal",
+    teamB: "Irak",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-39",
+    resultA: null,
+    resultB: null,
+    teamA: "Cabo Verde",
+    teamB: "Arabia Saudita",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-40",
+    resultA: null,
+    resultB: null,
+    teamA: "Uruguay",
+    teamB: "España",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-41",
+    resultA: null,
+    resultB: null,
+    teamA: "Nueva Zelanda",
+    teamB: "Bélgica",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-42",
+    resultA: null,
+    resultB: null,
+    teamA: "Egipto",
+    teamB: "Irán",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-43",
+    resultA: null,
+    resultB: null,
+    teamA: "Panamá",
+    teamB: "Inglaterra",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-44",
+    resultA: null,
+    resultB: null,
+    teamA: "Croacia",
+    teamB: "Ghana",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-45",
+    resultA: null,
+    resultB: null,
+    teamA: "Colombia",
+    teamB: "Portugal",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-46",
+    resultA: null,
+    resultB: null,
+    teamA: "RD Congo",
+    teamB: "Uzbekistán",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-47",
+    resultA: null,
+    resultB: null,
+    teamA: "Argelia",
+    teamB: "Austria",
+  },
+  {
+    datetime: null,
+    group: "",
+    id: "m-48",
+    resultA: null,
+    resultB: null,
+    teamA: "Jordania",
+    teamB: "Argentina",
+  },
+];
 
 const ADMIN_ONLY_TABS = new Set(["partidos", "participantes", "resultados"]);
 
@@ -33,14 +259,9 @@ export default function App() {
   const [importError, setImportError] = useState("");
   const fileInputRef = useRef(null);
 
-  // Si alguien sale del modo admin (o nunca entró) y se había quedado en
-  // una pestaña que ya no le toca ver, la "tab visible" cae a Predicciones
-  // sin necesidad de un efecto que dispare otro render.
   const visibleTab =
     !isAdmin && ADMIN_ONLY_TABS.has(tab) ? "predicciones" : tab;
 
-  // Sin credenciales de Firebase no hay dónde guardar datos compartidos:
-  // mostramos instrucciones en vez de una app que parece vacía o rota.
   if (status === "no-config") {
     return <SetupNotice />;
   }
@@ -101,6 +322,39 @@ export default function App() {
     }
   }
 
+  // 3. Función para subir los partidos de jalón a Firestore
+  async function cargarPartidosMasivos() {
+    if (todosLosPartidos.length === 0) {
+      alert(
+        "La lista de partidos está vacía. Agrega los partidos en el código primero.",
+      );
+      return;
+    }
+
+    const ok = window.confirm(
+      `¿Seguro que quieres subir ${todosLosPartidos.length} partidos de jalón a Firestore?`,
+    );
+    if (!ok) return;
+
+    try {
+      const batch = writeBatch(db);
+
+      todosLosPartidos.forEach((partido) => {
+        // Asegúrate de que 'matches' sea el nombre de tu colección en la BD
+        const partidoRef = doc(db, "matches", partido.id);
+        batch.set(partidoRef, partido);
+      });
+
+      await batch.commit();
+      alert(
+        "¡Todos los partidos se subieron correctamente a Firestore! Recarga la página para verlos.",
+      );
+    } catch (error) {
+      console.error("Error al subir los partidos: ", error);
+      alert("Hubo un error al subir los partidos. Revisa la consola.");
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <div className="stadium-bg" />
@@ -148,6 +402,15 @@ export default function App() {
               setPredictions={setPredictions}
             />
           )}
+
+          {activeTab === "vista" && (
+            <MatchViewTab
+              matches={matches}
+              participants={participants}
+              predictions={predictions}
+            />
+          )}
+
           {isAdmin && visibleTab === "resultados" && (
             <ResultsTab matches={matches} setMatches={setMatches} />
           )}
@@ -156,6 +419,14 @@ export default function App() {
         {isAdmin && (
           <footer className="text-center pt-2 pb-2 space-y-3">
             <div className="flex items-center justify-center gap-5">
+              {/* 4. Botón temporal para subir los partidos */}
+              <button
+                onClick={cargarPartidosMasivos}
+                className="flex items-center gap-1.5 text-xs text-night bg-gold px-2 py-1 rounded-md hover:bg-gold-light transition-colors font-bold"
+              >
+                Subir partidos de jalón
+              </button>
+
               <button
                 onClick={handleExport}
                 className="flex items-center gap-1.5 text-xs text-mist hover:text-pitch-light transition-colors"

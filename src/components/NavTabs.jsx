@@ -5,6 +5,7 @@ import {
   ClipboardList,
   Goal,
   Lock,
+  Eye,
   LogOut,
 } from "lucide-react";
 
@@ -14,11 +15,12 @@ const ALL_TABS = [
   { id: "participantes", label: "Participantes", icon: Users },
   { id: "predicciones", label: "Predicciones", icon: ClipboardList },
   { id: "resultados", label: "Resultados", icon: Goal },
+  { id: "vista", label: "Vista", icon: Eye },
 ];
 
 // Los familiares ("visitantes") solo necesitan ver la tabla y capturar
 // sus predicciones. El resto de pestañas son cosas de administración.
-const VISITOR_TAB_IDS = new Set(["tabla", "predicciones"]);
+const VISITOR_TAB_IDS = new Set(["tabla", "predicciones, vista"]);
 
 export default function NavTabs({
   active,
