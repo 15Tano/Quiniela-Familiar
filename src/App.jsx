@@ -403,7 +403,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === "vista" && (
+          {visibleTab === "vista" && (
             <MatchViewTab
               matches={matches}
               participants={participants}
