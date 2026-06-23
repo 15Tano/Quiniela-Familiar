@@ -244,7 +244,7 @@ const ADMIN_ONLY_TABS = new Set(["partidos", "participantes", "resultados"]);
 
 export default function App() {
   const { isAdmin, unlock, lock, pinConfigured } = useAdminAccess();
-  const [tab, setTab] = useState(() => (isAdmin ? "tabla" : "predicciones"));
+  const [tab, setTab] = useState("tabla");
   const [showPinModal, setShowPinModal] = useState(false);
   const {
     matches,

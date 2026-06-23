@@ -3,7 +3,6 @@ import { ChevronLeft, ChevronRight, Clock, CheckCircle } from "lucide-react";
 import TeamTag from "./TeamTag";
 import { scorePrediction } from "../utils/scoring";
 
-// Formatea fecha/hora del partido
 function formatDatetime(isoString) {
   if (!isoString) return "";
   const d = new Date(isoString);
@@ -16,7 +15,6 @@ function formatDatetime(isoString) {
   });
 }
 
-// Decide ícono/color según resultado del pronóstico
 function PredictionBadge({ pred, match }) {
   const hasResult =
     match.resultA !== null &&
@@ -42,7 +40,6 @@ function PredictionBadge({ pred, match }) {
   const scoreLabel = `${pred.scoreA} – ${pred.scoreB}`;
 
   if (!hasResult) {
-    // Partido pendiente: solo mostrar la predicción
     return (
       <span className="font-display text-sm text-[var(--color-ink)] tracking-wider">
         {scoreLabel}
@@ -94,25 +91,32 @@ function PredictionBadge({ pred, match }) {
 }
 
 export default function MatchViewTab({ matches, participants, predictions }) {
-  const [currentIndex, setCurrentIndex] = useState(() => {
-    const lastPlayed = [...matches]
-      .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
-      .reduce((acc, m, idx) => {
-        const played =
-          m.resultA !== null &&
-          m.resultA !== undefined &&
-          m.resultB !== null &&
-          m.resultB !== undefined;
-        return played ? idx : acc;
-      }, 0);
-    return lastPlayed;
-  });
+  // null = el usuario no ha navegado manualmente todavía
+  const [manualIndex, setManualIndex] = useState(null);
 
   const sortedMatches = useMemo(() => {
     return [...matches].sort(
       (a, b) => new Date(a.datetime) - new Date(b.datetime),
     );
   }, [matches]);
+
+  // Índice del último partido con resultado (se recalcula cuando llegan datos)
+  const defaultIndex = useMemo(() => {
+    return sortedMatches.reduce((acc, m, idx) => {
+      const played =
+        m.resultA !== null &&
+        m.resultA !== undefined &&
+        m.resultB !== null &&
+        m.resultB !== undefined;
+      return played ? idx : acc;
+    }, 0);
+  }, [sortedMatches]);
+
+  // Si el usuario no navegó, seguimos el defaultIndex; si navegó, usamos su elección
+  const activeIndex = Math.min(
+    manualIndex !== null ? manualIndex : defaultIndex,
+    Math.max(0, sortedMatches.length - 1),
+  );
 
   if (!sortedMatches.length) {
     return (
@@ -122,8 +126,7 @@ export default function MatchViewTab({ matches, participants, predictions }) {
     );
   }
 
-  const safeIndex = Math.min(currentIndex, sortedMatches.length - 1);
-  const match = sortedMatches[safeIndex];
+  const match = sortedMatches[activeIndex];
 
   if (!match) {
     return (
@@ -139,9 +142,9 @@ export default function MatchViewTab({ matches, participants, predictions }) {
     match.resultB !== null &&
     match.resultB !== undefined;
 
-  const goPrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
+  const goPrev = () => setManualIndex(Math.max(0, activeIndex - 1));
   const goNext = () =>
-    setCurrentIndex((i) => Math.min(sortedMatches.length - 1, i + 1));
+    setManualIndex(Math.min(sortedMatches.length - 1, activeIndex + 1));
 
   return (
     <div className="max-w-xl mx-auto px-4 py-6 space-y-5">
@@ -151,7 +154,7 @@ export default function MatchViewTab({ matches, participants, predictions }) {
         <div className="flex items-center justify-between">
           <button
             onClick={goPrev}
-            disabled={safeIndex === 0}
+            disabled={activeIndex === 0}
             className="p-2 rounded-xl glass hover:bg-white/10 transition disabled:opacity-20 disabled:cursor-not-allowed"
             aria-label="Partido anterior"
           >
@@ -159,12 +162,12 @@ export default function MatchViewTab({ matches, participants, predictions }) {
           </button>
 
           <span className="text-[var(--color-mist)] text-sm font-heading tracking-widest uppercase">
-            Partido {safeIndex + 1} / {sortedMatches.length}
+            Partido {activeIndex + 1} / {sortedMatches.length}
           </span>
 
           <button
             onClick={goNext}
-            disabled={safeIndex === sortedMatches.length - 1}
+            disabled={activeIndex === sortedMatches.length - 1}
             className="p-2 rounded-xl glass hover:bg-white/10 transition disabled:opacity-20 disabled:cursor-not-allowed"
             aria-label="Partido siguiente"
           >
@@ -174,7 +177,6 @@ export default function MatchViewTab({ matches, participants, predictions }) {
 
         {/* Equipos */}
         <div className="flex items-center justify-between gap-3">
-          {/* Equipo A */}
           <div className="flex-1 flex flex-col items-center gap-2">
             <TeamTag name={match.teamA} size="lg" />
             {hasResult && (
@@ -184,7 +186,6 @@ export default function MatchViewTab({ matches, participants, predictions }) {
             )}
           </div>
 
-          {/* Separador */}
           <div className="flex flex-col items-center gap-1 shrink-0">
             {hasResult ? (
               <CheckCircle size={18} className="text-[var(--color-pitch)]" />
@@ -196,7 +197,6 @@ export default function MatchViewTab({ matches, participants, predictions }) {
             </span>
           </div>
 
-          {/* Equipo B */}
           <div className="flex-1 flex flex-col items-center gap-2">
             <TeamTag name={match.teamB} size="lg" />
             {hasResult && (
@@ -215,7 +215,7 @@ export default function MatchViewTab({ matches, participants, predictions }) {
           </p>
         )}
 
-        {/* Leyenda si hay resultado */}
+        {/* Leyenda */}
         {hasResult && (
           <div className="flex justify-center gap-4 pt-1 text-xs text-[var(--color-mist)] font-body">
             <span>
@@ -256,7 +256,7 @@ export default function MatchViewTab({ matches, participants, predictions }) {
         })}
       </div>
 
-      {/* ── Selector rápido de partido (puntos) ── */}
+      {/* ── Selector rápido ── */}
       <div className="flex flex-wrap justify-center gap-1.5 pt-2">
         {sortedMatches.map((m, idx) => {
           const played =
@@ -264,11 +264,11 @@ export default function MatchViewTab({ matches, participants, predictions }) {
             m.resultA !== undefined &&
             m.resultB !== null &&
             m.resultB !== undefined;
-          const isActive = idx === safeIndex;
+          const isActive = idx === activeIndex;
           return (
             <button
               key={m.id}
-              onClick={() => setCurrentIndex(idx)}
+              onClick={() => setManualIndex(idx)}
               title={`${m.teamA} vs ${m.teamB}`}
               className={`w-6 h-6 rounded-full text-[10px] font-display transition
                 ${
