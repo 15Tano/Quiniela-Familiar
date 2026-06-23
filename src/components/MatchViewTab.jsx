@@ -113,6 +113,15 @@ export default function MatchViewTab({ matches, participants, predictions }) {
 
   const safeIndex = Math.min(currentIndex, sortedMatches.length - 1);
   const match = sortedMatches[safeIndex];
+
+  if (!match) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-[var(--color-mist)]">
+        <p className="text-lg">Cargando partidos...</p>
+      </div>
+    );
+  }
+
   const hasResult =
     match.resultA !== null &&
     match.resultA !== undefined &&

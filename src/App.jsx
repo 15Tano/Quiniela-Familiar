@@ -1,6 +1,5 @@
 import { useRef, useState } from "react";
 import { Trophy, Download, Upload } from "lucide-react";
-import MatchViewTab from "./components/MatchViewTab";
 
 // 1. Importaciones para el Batch de Firebase
 import { writeBatch, doc } from "firebase/firestore";
@@ -19,6 +18,7 @@ import ResultsTab from "./components/ResultsTab";
 import ConnectionStatus from "./components/ConnectionStatus";
 import SetupNotice from "./components/SetupNotice";
 import AdminPinModal from "./components/AdminPinModal";
+import MatchViewTab from "./components/MatchViewTab";
 
 // 2. Aquí pegas toda tu lista de partidos
 const todosLosPartidos = [

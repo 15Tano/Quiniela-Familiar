@@ -20,7 +20,7 @@ const ALL_TABS = [
 
 // Los familiares ("visitantes") solo necesitan ver la tabla y capturar
 // sus predicciones. El resto de pestañas son cosas de administración.
-const VISITOR_TAB_IDS = new Set(["tabla", "predicciones, vista"]);
+const VISITOR_TAB_IDS = new Set(["tabla", "predicciones", "vista"]);
 
 export default function NavTabs({
   active,
