@@ -94,7 +94,19 @@ function PredictionBadge({ pred, match }) {
 }
 
 export default function MatchViewTab({ matches, participants, predictions }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const lastPlayed = [...matches]
+      .sort((a, b) => new Date(a.datetime) - new Date(b.datetime))
+      .reduce((acc, m, idx) => {
+        const played =
+          m.resultA !== null &&
+          m.resultA !== undefined &&
+          m.resultB !== null &&
+          m.resultB !== undefined;
+        return played ? idx : acc;
+      }, 0);
+    return lastPlayed;
+  });
 
   const sortedMatches = useMemo(() => {
     return [...matches].sort(

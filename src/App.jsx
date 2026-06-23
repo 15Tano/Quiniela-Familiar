@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Trophy, Download, Upload } from "lucide-react";
 
 // 1. Importaciones para el Batch de Firebase
-import { writeBatch, doc } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "./firebase/config"; // <-- OJO: Verifica que esta ruta apunte a tu archivo de config de Firebase
 
 import { useSharedQuiniela } from "./hooks/useSharedQuiniela";
@@ -277,7 +277,7 @@ export default function App() {
 
   function handleExitAdmin() {
     lock();
-    setTab("predicciones");
+    setTab("tabla");
   }
 
   function resetAll() {
@@ -322,32 +322,29 @@ export default function App() {
     }
   }
 
-  // 3. Función para subir los partidos de jalón a Firestore
+  // 3. Función corregida para subir a quinielas > familiar
   async function cargarPartidosMasivos() {
     if (todosLosPartidos.length === 0) {
-      alert(
-        "La lista de partidos está vacía. Agrega los partidos en el código primero.",
-      );
+      alert("La lista de partidos está vacía.");
       return;
     }
 
     const ok = window.confirm(
-      `¿Seguro que quieres subir ${todosLosPartidos.length} partidos de jalón a Firestore?`,
+      `¿Seguro que quieres agregar ${todosLosPartidos.length} partidos a tu quiniela familiar?`,
     );
     if (!ok) return;
 
     try {
-      const batch = writeBatch(db);
+      // 1. Apuntamos al documento 'familiar' en la colección 'quinielas'
+      const quinielaRef = doc(db, "quinielas", "familiar");
 
-      todosLosPartidos.forEach((partido) => {
-        // Asegúrate de que 'matches' sea el nombre de tu colección en la BD
-        const partidoRef = doc(db, "matches", partido.id);
-        batch.set(partidoRef, partido);
+      // 2. Metemos todos los partidos nuevos al arreglo 'matches' usando arrayUnion
+      await updateDoc(quinielaRef, {
+        matches: arrayUnion(...todosLosPartidos),
       });
 
-      await batch.commit();
       alert(
-        "¡Todos los partidos se subieron correctamente a Firestore! Recarga la página para verlos.",
+        "¡Todos los partidos se agregaron correctamente a tu documento! Recarga la página para verlos.",
       );
     } catch (error) {
       console.error("Error al subir los partidos: ", error);
