@@ -14,7 +14,8 @@ const EMPTY_STATE = {
   participants: [],
   predictions: {},
   currentRound: 1,
-  rounds: [], // [{ number, winners: [{participantId, name, points}], endedAt }]
+  rounds: [],
+  predictionsClosed: false,
 };
 
 export function useSharedQuiniela() {
@@ -46,6 +47,7 @@ export function useSharedQuiniela() {
           predictions: snap.data().predictions ?? {},
           currentRound: snap.data().currentRound ?? 1,
           rounds: snap.data().rounds ?? [],
+          predictionsClosed: snap.data().predictionsClosed ?? false,
         };
         latestRef.current = next;
         setData(next);
@@ -71,14 +73,10 @@ export function useSharedQuiniela() {
     );
   }
 
-  // Publica el ganador de la ronda actual sin resetear nada.
-  // winners: [{ participantId, name, points }]
   function publishRoundWinner(winners) {
     if (!isFirebaseConfigured) return;
     const current = latestRef.current;
     const roundNumber = current.currentRound;
-
-    // Busca si ya existe una entrada para esta ronda y la reemplaza
     const existingRounds = current.rounds ?? [];
     const otherRounds = existingRounds.filter((r) => r.number !== roundNumber);
     const newEntry = {
@@ -87,7 +85,6 @@ export function useSharedQuiniela() {
       publishedAt: new Date().toISOString(),
     };
     const nextRounds = [...otherRounds, newEntry];
-
     latestRef.current = { ...current, rounds: nextRounds };
     setData({ ...latestRef.current });
     const ref = doc(db, "quinielas", ROOM_ID);
@@ -98,23 +95,20 @@ export function useSharedQuiniela() {
     );
   }
 
-  // Inicia una nueva ronda: resetea resultados y sube el contador.
   function startNewRound() {
     if (!isFirebaseConfigured) return;
     const current = latestRef.current;
     const nextRound = (current.currentRound ?? 1) + 1;
-
-    // Resetea resultA y resultB de todos los partidos
     const resetMatches = current.matches.map((m) => ({
       ...m,
       resultA: null,
       resultB: null,
     }));
-
     const next = {
       ...current,
       matches: resetMatches,
       currentRound: nextRound,
+      predictionsClosed: false, // al iniciar nueva ronda se abren predicciones
     };
     latestRef.current = next;
     setData({ ...next });
@@ -122,8 +116,15 @@ export function useSharedQuiniela() {
     updateDoc(ref, {
       matches: resetMatches,
       currentRound: nextRound,
+      predictionsClosed: false,
       updatedAt: serverTimestamp(),
     }).catch(() => setStatus("error"));
+  }
+
+  function togglePredictionsClosed() {
+    if (!isFirebaseConfigured) return;
+    const next = !latestRef.current.predictionsClosed;
+    writeField("predictionsClosed", next);
   }
 
   function replaceAll({ matches, participants, predictions }) {
@@ -134,6 +135,7 @@ export function useSharedQuiniela() {
       predictions,
       currentRound: latestRef.current.currentRound ?? 1,
       rounds: latestRef.current.rounds ?? [],
+      predictionsClosed: latestRef.current.predictionsClosed ?? false,
     };
     latestRef.current = next;
     setData(next);
@@ -149,11 +151,13 @@ export function useSharedQuiniela() {
     predictions: data.predictions,
     currentRound: data.currentRound,
     rounds: data.rounds,
+    predictionsClosed: data.predictionsClosed,
     setMatches: (updater) => writeField("matches", updater),
     setParticipants: (updater) => writeField("participants", updater),
     setPredictions: (updater) => writeField("predictions", updater),
     publishRoundWinner,
     startNewRound,
+    togglePredictionsClosed,
     replaceAll,
     status,
   };

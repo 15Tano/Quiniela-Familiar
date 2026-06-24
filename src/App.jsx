@@ -1,9 +1,8 @@
 import { useRef, useState } from "react";
 import { Trophy, Download, Upload } from "lucide-react";
 
-// 1. Importaciones para el Batch de Firebase
 import { doc, updateDoc, arrayUnion } from "firebase/firestore";
-import { db } from "./firebase/config"; // <-- OJO: Verifica que esta ruta apunte a tu archivo de config de Firebase
+import { db } from "./firebase/config";
 
 import { useSharedQuiniela } from "./hooks/useSharedQuiniela";
 import { useAdminAccess } from "./hooks/useAdminAccess";
@@ -19,6 +18,18 @@ import ConnectionStatus from "./components/ConnectionStatus";
 import SetupNotice from "./components/SetupNotice";
 import AdminPinModal from "./components/AdminPinModal";
 import MatchViewTab from "./components/MatchViewTab";
+
+// Paleta de blobs por ronda: [colorBlob1, colorBlob2]
+const ROUND_COLORS = {
+  1: ["rgba(31,174,110,0.18)", "rgba(244,183,64,0.14)"], // verde + dorado (original)
+  2: ["rgba(59,130,246,0.18)", "rgba(139,92,246,0.14)"], // azul + violeta
+  3: ["rgba(239,68,68,0.18)", "rgba(249,115,22,0.14)"], // rojo + naranja
+  4: ["rgba(6,182,212,0.18)", "rgba(16,185,129,0.14)"], // cian + esmeralda
+};
+
+function getRoundColors(round) {
+  return ROUND_COLORS[round] ?? ROUND_COLORS[4];
+}
 
 // 2. Aquí pegas toda tu lista de partidos
 const todosLosPartidos = [
@@ -251,12 +262,14 @@ export default function App() {
     participants,
     predictions,
     currentRound,
-    rounds, // ← nuevo
+    rounds,
+    predictionsClosed,
     setMatches,
     setParticipants,
     setPredictions,
     publishRoundWinner,
-    startNewRound, // ← nuevo
+    startNewRound,
+    togglePredictionsClosed,
     replaceAll,
     status,
   } = useSharedQuiniela();
@@ -326,29 +339,22 @@ export default function App() {
     }
   }
 
-  // 3. Función corregida para subir a quinielas > familiar
   async function cargarPartidosMasivos() {
     if (todosLosPartidos.length === 0) {
       alert("La lista de partidos está vacía.");
       return;
     }
-
     const ok = window.confirm(
       `¿Seguro que quieres agregar ${todosLosPartidos.length} partidos a tu quiniela familiar?`,
     );
     if (!ok) return;
-
     try {
-      // 1. Apuntamos al documento 'familiar' en la colección 'quinielas'
       const quinielaRef = doc(db, "quinielas", "familiar");
-
-      // 2. Metemos todos los partidos nuevos al arreglo 'matches' usando arrayUnion
       await updateDoc(quinielaRef, {
         matches: arrayUnion(...todosLosPartidos),
       });
-
       alert(
-        "¡Todos los partidos se agregaron correctamente a tu documento! Recarga la página para verlos.",
+        "¡Todos los partidos se agregaron correctamente! Recarga la página para verlos.",
       );
     } catch (error) {
       console.error("Error al subir los partidos: ", error);
@@ -356,9 +362,19 @@ export default function App() {
     }
   }
 
+  // Colores del fondo según la ronda actual
+  const [blob1, blob2] = getRoundColors(currentRound);
+
   return (
     <div className="min-h-screen">
-      <div className="stadium-bg" />
+      {/* Fondo con colores dinámicos por ronda */}
+      <div
+        className="stadium-bg"
+        style={{
+          "--blob1-color": blob1,
+          "--blob2-color": blob2,
+        }}
+      />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-28 sm:pb-32 space-y-6">
         <header className="glass-strong rounded-3xl px-5 sm:px-6 py-4 flex items-center justify-between gap-3">
@@ -371,7 +387,7 @@ export default function App() {
                 Quiniela Familiar
               </h1>
               <p className="text-xs text-mist truncate">
-                Mundial 2026 · entre nosotros
+                Mundial 2026 · Ronda {currentRound}
               </p>
             </div>
           </div>
@@ -384,7 +400,7 @@ export default function App() {
               participants={participants}
               matches={matches}
               predictions={predictions}
-              rounds={rounds} // ← nuevo
+              rounds={rounds}
               currentRound={currentRound}
             />
           )}
@@ -403,9 +419,11 @@ export default function App() {
               matches={matches}
               predictions={predictions}
               setPredictions={setPredictions}
+              predictionsClosed={predictionsClosed}
+              togglePredictionsClosed={togglePredictionsClosed}
+              isAdmin={isAdmin}
             />
           )}
-
           {visibleTab === "vista" && (
             <MatchViewTab
               matches={matches}
@@ -413,7 +431,6 @@ export default function App() {
               predictions={predictions}
             />
           )}
-
           {isAdmin && visibleTab === "resultados" && (
             <ResultsTab
               matches={matches}
@@ -429,14 +446,12 @@ export default function App() {
         {isAdmin && (
           <footer className="text-center pt-2 pb-2 space-y-3">
             <div className="flex items-center justify-center gap-5">
-              {/* 4. Botón temporal para subir los partidos */}
               <button
                 onClick={cargarPartidosMasivos}
                 className="flex items-center gap-1.5 text-xs text-night bg-gold px-2 py-1 rounded-md hover:bg-gold-light transition-colors font-bold"
               >
                 Subir partidos de jalón
               </button>
-
               <button
                 onClick={handleExport}
                 className="flex items-center gap-1.5 text-xs text-mist hover:text-pitch-light transition-colors"
