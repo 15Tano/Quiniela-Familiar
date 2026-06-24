@@ -22,9 +22,10 @@ import {
   getNextMatch,
 } from "../utils/scoring";
 import RoundWinnerBanner from "./RoundWinnerBanner";
+import { useState, useEffect } from "react";
 import TeamTag from "./TeamTag";
 
-const CUOTA = 100;
+const CUOTA = 50;
 
 // ── Cuenta regresiva ─────────────────────────────────────────────────────────
 
@@ -49,10 +50,6 @@ function useCountdown(targetDate) {
 }
 
 // ── Partido del día ──────────────────────────────────────────────────────────
-
-import { useState, useEffect } from "react";
-
-<RoundWinnerBanner rounds={rounds} currentRound={currentRound} />;
 
 function NextMatchCard({ match }) {
   const [timeLeft, setTimeLeft] = useState("");
