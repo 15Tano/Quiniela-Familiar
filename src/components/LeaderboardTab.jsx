@@ -21,6 +21,7 @@ import {
   getLeaderStreak,
   getNextMatch,
 } from "../utils/scoring";
+import RoundWinnerBanner from "./RoundWinnerBanner";
 import TeamTag from "./TeamTag";
 
 const CUOTA = 100;
@@ -50,6 +51,8 @@ function useCountdown(targetDate) {
 // ── Partido del día ──────────────────────────────────────────────────────────
 
 import { useState, useEffect } from "react";
+
+<RoundWinnerBanner rounds={rounds} currentRound={currentRound} />;
 
 function NextMatchCard({ match }) {
   const [timeLeft, setTimeLeft] = useState("");
@@ -371,7 +374,13 @@ function SummaryRow({ icon: Icon, label, value, sublabel, accent = "pitch" }) {
 
 // ── Componente principal ─────────────────────────────────────────────────────
 
-export default function LeaderboardTab({ participants, matches, predictions }) {
+export default function LeaderboardTab({
+  participants,
+  matches,
+  predictions,
+  rounds,
+  currentRound,
+}) {
   const leaderboard = useMemo(
     () => buildLeaderboard(participants, matches, predictions),
     [participants, matches, predictions],
@@ -419,9 +428,11 @@ export default function LeaderboardTab({ participants, matches, predictions }) {
       `}</style>
 
       <div className="space-y-6">
+        {/* ── Ganador de ronda ── */}
+        <RoundWinnerBanner rounds={rounds} currentRound={currentRound} />
+
         {/* ── Partido del día ── */}
         {nextMatch && <NextMatchCard match={nextMatch} />}
-
         {/* ── Tabla de posiciones ── */}
         <section className="space-y-4">
           <h2 className="font-heading text-xl font-bold text-ink px-1">

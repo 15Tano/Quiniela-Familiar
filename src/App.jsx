@@ -250,9 +250,13 @@ export default function App() {
     matches,
     participants,
     predictions,
+    currentRound,
+    rounds, // ← nuevo
     setMatches,
     setParticipants,
     setPredictions,
+    publishRoundWinner,
+    startNewRound, // ← nuevo
     replaceAll,
     status,
   } = useSharedQuiniela();
@@ -380,6 +384,8 @@ export default function App() {
               participants={participants}
               matches={matches}
               predictions={predictions}
+              rounds={rounds} // ← nuevo
+              currentRound={currentRound}
             />
           )}
           {isAdmin && visibleTab === "partidos" && (
@@ -409,7 +415,14 @@ export default function App() {
           )}
 
           {isAdmin && visibleTab === "resultados" && (
-            <ResultsTab matches={matches} setMatches={setMatches} />
+            <ResultsTab
+              matches={matches}
+              participants={participants}
+              currentRound={currentRound}
+              setMatches={setMatches}
+              publishRoundWinner={publishRoundWinner}
+              startNewRound={startNewRound}
+            />
           )}
         </main>
 
