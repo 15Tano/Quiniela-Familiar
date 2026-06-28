@@ -14,6 +14,7 @@ import {
   Minus,
   Clock,
   CalendarDays,
+  Skull,
 } from "lucide-react";
 import {
   buildLeaderboard,
@@ -26,28 +27,6 @@ import { useState, useEffect } from "react";
 import TeamTag from "./TeamTag";
 
 const CUOTA = 50;
-
-// ── Cuenta regresiva ─────────────────────────────────────────────────────────
-
-function useCountdown(targetDate) {
-  const [now, setNow] = useMemo(() => {
-    // Usamos un truco: devolvemos estado mutable sin useState real
-    // porque este hook vive dentro de useMemo; lo haremos con un ref pattern
-    return [Date.now(), null];
-  }, []);
-
-  // Implementación real con useState
-  const [tick, setTick] = useMemo(() => {
-    let interval;
-    const start = () => {
-      interval = setInterval(() => {}, 1000);
-      return () => clearInterval(interval);
-    };
-    return [0, start];
-  }, []);
-
-  return null; // placeholder — ver implementación abajo
-}
 
 // ── Partido del día ──────────────────────────────────────────────────────────
 
@@ -97,7 +76,6 @@ function NextMatchCard({ match }) {
       className="glass-strong rounded-2xl p-4 sm:p-5 space-y-3 border border-pitch/20"
       style={{ animation: "fadeSlideUp 0.5s ease both" }}
     >
-      {/* Encabezado */}
       <div className="flex items-center gap-2">
         <span className="w-7 h-7 rounded-lg bg-pitch/20 flex items-center justify-center shrink-0">
           <CalendarDays size={15} className="text-pitch-light" />
@@ -105,7 +83,6 @@ function NextMatchCard({ match }) {
         <span className="font-heading text-xs uppercase tracking-widest text-pitch-light font-semibold">
           Próximo partido
         </span>
-        {/* Dot parpadeante */}
         <span className="ml-auto flex items-center gap-1.5">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pitch-light opacity-75" />
@@ -117,7 +94,6 @@ function NextMatchCard({ match }) {
         </span>
       </div>
 
-      {/* Equipos */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex-1 flex justify-center">
           <TeamTag name={match.teamA} size="md" />
@@ -132,7 +108,6 @@ function NextMatchCard({ match }) {
         </div>
       </div>
 
-      {/* Cuenta regresiva */}
       <div className="flex items-center justify-between pt-1 border-t border-white/10">
         <span className="flex items-center gap-1.5 text-[11px] text-mist font-body capitalize">
           <Clock size={12} />
@@ -203,7 +178,7 @@ function TrendIcon({ trend }) {
   return <Minus size={13} className="text-mist/40 shrink-0" />;
 }
 
-// ── Badges de racha y last-correct ──────────────────────────────────────────
+// ── Badges ───────────────────────────────────────────────────────────────────
 
 function ExactStreakBadge({ streak }) {
   if (streak < 2) return null;
@@ -227,6 +202,21 @@ function LastCorrectBadge({ correct }) {
   );
 }
 
+// Badge de remontada — se muestra en filas 4+
+function ComebackBadge({ participant, leaderPts, pendingMatches }) {
+  const maxPossible = participant.points + pendingMatches * 2;
+  if (maxPossible >= leaderPts) return null; // todavía puede alcanzar
+  return (
+    <span
+      title="Ya no puede alcanzar al líder"
+      className="inline-flex items-center gap-0.5 text-[10px] font-heading font-semibold text-coral/80 bg-coral/10 rounded-full px-1.5 py-0.5"
+    >
+      <Skull size={9} />
+      Sin chance
+    </span>
+  );
+}
+
 // ── Podium spot ──────────────────────────────────────────────────────────────
 
 function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
@@ -234,7 +224,6 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
   const initial = participant.name.trim().charAt(0).toUpperCase();
   const gap = leaderPts - participant.points;
 
-  // Corona: dorada sólida si lleva racha como líder, normal si no
   const crownClass =
     isLeader && leaderStreak >= 3
       ? "text-gold drop-shadow-[0_2px_10px_rgba(244,183,64,0.9)] animate-bounce"
@@ -247,7 +236,6 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
         animation: `podiumEntry 0.6s cubic-bezier(.34,1.56,.64,1) ${cfg.animDelay} both`,
       }}
     >
-      {/* Avatar + corona */}
       <div className="relative mb-2">
         {rank === 1 && (
           <Crown
@@ -256,7 +244,6 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
             className={`absolute -top-6 left-1/2 -translate-x-1/2 ${crownClass}`}
           />
         )}
-        {/* Glow animado para el 1er lugar */}
         {rank === 1 && (
           <span
             className="absolute inset-0 rounded-full bg-gold/20 animate-ping"
@@ -268,27 +255,22 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
         >
           {initial}
         </span>
-
-        {/* Badges encima del avatar */}
         <div className="absolute -bottom-1 -right-1 flex items-center gap-0.5">
           <ExactStreakBadge streak={participant.exactStreak} />
           <LastCorrectBadge correct={participant.lastCorrect} />
         </div>
       </div>
 
-      {/* Nombre */}
       <p
         className={`font-heading font-semibold text-ink ${cfg.nameSize} text-center truncate w-full px-1`}
       >
         {participant.name}
       </p>
 
-      {/* Tendencia */}
       <div className="flex items-center gap-1 mt-0.5 mb-1">
         <TrendIcon trend={participant.trend} />
       </div>
 
-      {/* Puntos */}
       <p
         className={`font-heading font-extrabold ${cfg.ptsSize} ${cfg.ptsColor} leading-none`}
       >
@@ -296,7 +278,6 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
       </p>
       <p className="text-[10px] text-mist uppercase tracking-wide">pts</p>
 
-      {/* Mini stats */}
       <div className="flex items-center gap-2 mt-1 mb-2 text-[10px] text-mist">
         <span className="flex items-center gap-0.5">
           <Target size={9} className="text-pitch-light" />
@@ -308,12 +289,10 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
         </span>
       </div>
 
-      {/* Diferencia con el líder (solo 2do y 3ro) */}
       {rank > 1 && gap > 0 && (
         <p className="text-[10px] text-mist mb-1.5">−{gap} pts</p>
       )}
 
-      {/* Racha de liderazgo (solo 1ro) */}
       {rank === 1 && leaderStreak >= 2 && (
         <p className="text-[10px] text-gold/70 mb-1.5 font-heading text-center px-1">
           Líder{" "}
@@ -323,7 +302,6 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
         </p>
       )}
 
-      {/* Pedestal */}
       <div
         className={`glass-glossy w-full ${cfg.pedestal} rounded-t-2xl flex items-start justify-center pt-2.5 bg-gradient-to-b ${cfg.pedestalBg}`}
         style={{
@@ -336,6 +314,177 @@ function PodiumSpot({ participant, rank, leaderPts, leaderStreak, isLeader }) {
           {rank}
         </span>
       </div>
+    </div>
+  );
+}
+
+// ── El Inframundo — último lugar ─────────────────────────────────────────────
+
+function InframundoSpot({ participant, rank, leaderPts }) {
+  const initial = participant.name.trim().charAt(0).toUpperCase();
+  const gap = leaderPts - participant.points;
+
+  return (
+    <div
+      className="flex flex-col items-center w-28 sm:w-36 mx-auto"
+      style={{
+        animation: "infernoEntry 0.7s cubic-bezier(.34,1.56,.64,1) 0.5s both",
+      }}
+    >
+      {/* Título del inframundo */}
+      <p className="font-heading text-[10px] uppercase tracking-widest text-coral/60 mb-2 text-center">
+        El Inframundo
+      </p>
+
+      {/* Lápida SVG */}
+      <div className="relative flex flex-col items-center">
+        {/* Calavera flotante arriba */}
+        <div
+          className="text-2xl mb-1 select-none"
+          style={{ animation: "skullFloat 3s ease-in-out infinite" }}
+        >
+          💀
+        </div>
+
+        {/* Lápida con avatar */}
+        <div className="relative">
+          <svg
+            viewBox="0 0 80 100"
+            width="80"
+            height="100"
+            className="overflow-visible"
+          >
+            {/* Sombra de lápida */}
+            <ellipse cx="40" cy="96" rx="28" ry="5" fill="rgba(0,0,0,0.35)" />
+            {/* Cuerpo de la lápida */}
+            <rect
+              x="8"
+              y="40"
+              width="64"
+              height="56"
+              rx="4"
+              fill="rgba(30,20,40,0.85)"
+              stroke="rgba(255,100,100,0.25)"
+              strokeWidth="1.5"
+            />
+            {/* Cabeza redondeada */}
+            <path
+              d="M8,60 Q8,30 40,26 Q72,30 72,60"
+              fill="rgba(30,20,40,0.85)"
+              stroke="rgba(255,100,100,0.25)"
+              strokeWidth="1.5"
+            />
+            {/* R.I.P. tallado */}
+            <text
+              x="40"
+              y="52"
+              textAnchor="middle"
+              fontFamily="monospace"
+              fontSize="9"
+              fill="rgba(255,100,100,0.5)"
+              fontWeight="bold"
+            >
+              R.I.P.
+            </text>
+            {/* Inicial del participante */}
+            <text
+              x="40"
+              y="76"
+              textAnchor="middle"
+              fontFamily="sans-serif"
+              fontSize="22"
+              fill="rgba(255,120,120,0.9)"
+              fontWeight="bold"
+            >
+              {initial}
+            </text>
+            {/* Grieta decorativa */}
+            <path
+              d="M38,58 L41,65 L39,70 L42,78"
+              stroke="rgba(255,100,100,0.2)"
+              strokeWidth="1"
+              fill="none"
+            />
+          </svg>
+
+          {/* Llamas CSS en la base de la lápida */}
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-20 flex justify-center gap-0.5 pointer-events-none">
+            {[...Array(5)].map((_, i) => (
+              <span
+                key={i}
+                className="inferno-flame"
+                style={{
+                  animationDelay: `${i * 0.18}s`,
+                  animationDuration: `${0.7 + i * 0.13}s`,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Base / tierra */}
+        <div
+          className="w-24 h-4 rounded-t-sm mt-0 relative overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(60,20,10,0.9), rgba(40,10,5,0.95))",
+          }}
+        >
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              background:
+                "repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(255,80,0,0.15) 3px, rgba(255,80,0,0.15) 4px)",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Nombre */}
+      <p
+        className="font-heading font-semibold text-coral text-sm sm:text-base text-center truncate w-full px-1 mt-2"
+        style={{ textShadow: "0 0 12px rgba(255,100,100,0.5)" }}
+      >
+        {participant.name}
+      </p>
+
+      {/* Tendencia — siempre down en el inframundo */}
+      <div className="flex items-center gap-1 mt-0.5 mb-1">
+        <TrendIcon trend={participant.trend} />
+      </div>
+
+      {/* Puntos en rojo */}
+      <p
+        className="font-heading font-extrabold text-3xl sm:text-4xl text-coral leading-none"
+        style={{ textShadow: "0 0 20px rgba(255,100,100,0.4)" }}
+      >
+        {participant.points}
+      </p>
+      <p className="text-[10px] text-coral/60 uppercase tracking-wide">pts</p>
+
+      {/* Mini stats */}
+      <div className="flex items-center gap-2 mt-1 mb-1 text-[10px] text-mist">
+        <span className="flex items-center gap-0.5">
+          <Target size={9} className="text-pitch-light" />
+          {participant.exact}
+        </span>
+        <span className="flex items-center gap-0.5">
+          <Goal size={9} className="text-gold-light" />
+          {participant.winnerOnly}
+        </span>
+      </div>
+
+      {/* Diferencia con líder */}
+      {gap > 0 && (
+        <p className="text-[10px] text-coral/70 font-heading font-semibold">
+          −{gap} pts del 1º
+        </p>
+      )}
+
+      {/* Posición */}
+      <p className="text-[10px] text-coral/40 mt-0.5 font-heading">
+        #{rank} de {rank} 🪦
+      </p>
     </div>
   );
 }
@@ -391,14 +540,23 @@ export default function LeaderboardTab({
   const nextMatch = useMemo(() => getNextMatch(matches), [matches]);
 
   const playedCount = matches.filter(isMatchFinished).length;
+  const pendingMatches = matches.length - playedCount;
   const total = participants.length * CUOTA;
   const leaderPts = leaderboard[0]?.points ?? 0;
+
+  // Solo mostrar inframundo si hay 4+ participantes
+  const showInframundo = leaderboard.length >= 4;
+  const lastPlace = showInframundo ? leaderboard[leaderboard.length - 1] : null;
+  const lastPlaceRank = leaderboard.length;
 
   const podiumEntries = [2, 1, 3]
     .map((rank) => ({ rank, participant: leaderboard[rank - 1] }))
     .filter((entry) => entry.participant);
 
-  const rest = leaderboard.slice(3);
+  // Filas 4+ excluyendo el último (que va al inframundo)
+  const rest = showInframundo
+    ? leaderboard.slice(3, leaderboard.length - 1)
+    : leaderboard.slice(3);
 
   return (
     <>
@@ -421,6 +579,29 @@ export default function LeaderboardTab({
           70%  { transform: scale(1.3); }
           100% { transform: scale(1); opacity: 1; }
         }
+        @keyframes infernoEntry {
+          from { opacity: 0; transform: translateY(-30px) scale(0.88); }
+          to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes skullFloat {
+          0%, 100% { transform: translateY(0) rotate(-5deg); }
+          50%      { transform: translateY(-6px) rotate(5deg); }
+        }
+        @keyframes flameRise {
+          0%   { transform: scaleY(0.4) scaleX(0.8); opacity: 0.9; }
+          50%  { transform: scaleY(1.1) scaleX(0.85); opacity: 1; }
+          100% { transform: scaleY(0.3) scaleX(1.1); opacity: 0; }
+        }
+        .inferno-flame {
+          display: inline-block;
+          width: 8px;
+          height: 14px;
+          background: linear-gradient(to top, #ff4500, #ff8c00, #ffd700);
+          border-radius: 50% 50% 20% 20%;
+          animation: flameRise 0.8s ease-in-out infinite alternate;
+          transform-origin: bottom center;
+          filter: blur(1px);
+        }
         .badge-pop { animation: badgePop 0.4s cubic-bezier(.34,1.56,.64,1) 0.8s both; }
       `}</style>
 
@@ -430,6 +611,7 @@ export default function LeaderboardTab({
 
         {/* ── Partido del día ── */}
         {nextMatch && <NextMatchCard match={nextMatch} />}
+
         {/* ── Tabla de posiciones ── */}
         <section className="space-y-4">
           <h2 className="font-heading text-xl font-bold text-ink px-1">
@@ -470,7 +652,7 @@ export default function LeaderboardTab({
             </div>
           )}
 
-          {/* 4to lugar en adelante */}
+          {/* 4to lugar en adelante (excluyendo el último) */}
           {rest.length > 0 && (
             <div className="space-y-2.5 pt-1">
               {rest.map((p, i) => {
@@ -491,12 +673,17 @@ export default function LeaderboardTab({
                       {p.name.trim().charAt(0).toUpperCase()}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-heading font-semibold text-ink truncate">
                           {p.name}
                         </p>
                         <ExactStreakBadge streak={p.exactStreak} />
                         <LastCorrectBadge correct={p.lastCorrect} />
+                        <ComebackBadge
+                          participant={p}
+                          leaderPts={leaderPts}
+                          pendingMatches={pendingMatches}
+                        />
                       </div>
                       <div className="flex items-center gap-2.5 text-[11px] text-mist mt-0.5 flex-wrap">
                         <span className="flex items-center gap-1">
@@ -532,6 +719,38 @@ export default function LeaderboardTab({
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* ── El Inframundo ── */}
+          {showInframundo && lastPlace && (
+            <div
+              className="mt-6 pt-5 border-t border-coral/15 relative"
+              style={{ animation: "fadeSlideUp 0.5s ease 0.4s both" }}
+            >
+              {/* Separador con texto */}
+              <div className="flex items-center gap-2 mb-4 px-1">
+                <div className="flex-1 h-px bg-gradient-to-r from-transparent to-coral/20" />
+                <span className="text-[10px] font-heading uppercase tracking-widest text-coral/40 flex items-center gap-1">
+                  <Skull size={10} /> El Inframundo <Skull size={10} />
+                </span>
+                <div className="flex-1 h-px bg-gradient-to-l from-transparent to-coral/20" />
+              </div>
+
+              {/* Brillo rojo de fondo muy sutil */}
+              <div
+                className="absolute inset-0 rounded-3xl pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 50% 80%, rgba(255,80,50,0.06) 0%, transparent 70%)",
+                }}
+              />
+
+              <InframundoSpot
+                participant={lastPlace}
+                rank={lastPlaceRank}
+                leaderPts={leaderPts}
+              />
             </div>
           )}
         </section>
